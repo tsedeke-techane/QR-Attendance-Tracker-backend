@@ -4,6 +4,9 @@ import { connect } from 'mongoose';
 import { config } from 'dotenv';
 import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
+import classRoute from './routes/classRoute.js';
+import teacherRoute from './routes/teacherRoute.js';
+import attendanceRoute from './routes/attendanceRoutes.js';
 
 config();
 const app = express();
@@ -14,6 +17,9 @@ app.use(urlencoded({ extended: true }));
 app.use(json());
 
 app.use('/api/auth', authRoutes);
+app.use("/teacher",teacherRoute);
+app.use("/class",classRoute);
+app.use("/attendance",attendanceRoute);
 
 const PORT = process.env.PORT || 5000;
 
