@@ -456,21 +456,21 @@ export const generateQRAttendance = async (req, res) => {
 // @access  Private (Student only)
 export const scanQRAttendance = async (req, res) => {
   try {
-    const { qrData } = req.body;
+    const { token, classId } = req.body;
     const studentId = req.user._id;
 
-    if (!qrData) {
-      return res.status(400).json({ error: "QR data is required" });
-    }
+    // if (!qrData) {
+    //   return res.status(400).json({ error: "QR data is required" });
+    // }
 
-    let parsedData;
-    try {
-      parsedData = JSON.parse(qrData);
-    } catch (e) {
-      return res.status(400).json({ error: e });
-    }
+    // let parsedData;
+    // try {
+    //   parsedData = JSON.parse(qrData);
+    // } catch (e) {
+    //   return res.status(400).json({ error: e });
+    // }
 
-    const { token, classId } = parsedData;
+    // const { token, classId } = parsedData;
 
     const attendance = await Attendance.findOne({
       "qrCode.value": token,
