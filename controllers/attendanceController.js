@@ -400,6 +400,7 @@ import { Parser } from 'json2csv';
 export const generateQRAttendance = async (req, res) => {
   try {
     const { classId, expiresInMinutes = 40 } = req.body;
+    console.log(" i am in generateQRAttendance with class id of", classId);
 
     if (!classId) {
       return res.status(400).json({ error: "Class ID is required" });
@@ -455,8 +456,10 @@ export const generateQRAttendance = async (req, res) => {
 // @route   POST /api/attendance/scan
 // @access  Private (Student only)
 export const scanQRAttendance = async (req, res) => {
+  console.log(" i am receiving data in my scan route", req.body);
   try {
     const { token, classId } = req.body;
+    console.log(" and my token is ", token, " and my classId is ", classId);
     const studentId = req.user._id;
 
     // if (!qrData) {
@@ -521,19 +524,85 @@ export const scanQRAttendance = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-// @desc    Get student's attendance history for a specific class
-// @route   GET /api/attendance/history/class/:classId
-// @access  Private (Student only)
-export const getStudentClassAttendance = async (req, res) => {
+export const getSpecificStudentClassAttendance = async (req, res) => {
+ 
   try {
     const { classId } = req.params;
-    const studentId = req.user._id;
+    const {studentId} = req.body;
+     console.log(" i am getting here with my data of","classId",classId,"StudentId",studentId);
 
     const classObj = await Class.findOne({
       _id: classId,
       students: studentId
     });
+
+    if (!classObj) {
+      return res.status(403).json({ 
+        error: "Not enrolled in this class or class not found" 
+      });
+    }
+
+    const attendanceSessions = await Attendance.find({
+      class: classId,
+      "records.student": studentId
+    })
+    .sort({ date: -1 })
+    .select("date qrCode.expiresAt records.$");
+
+    const history = attendanceSessions.map(session => {
+      const record = session.records.find(r => 
+        r.student.toString() === studentId.toString()
+      );
+      return {
+        date: session.date,
+        status: record.status,
+        timeScanned: record.timeScanned,
+        wasLate: record.timeScanned && 
+                 record.timeScanned > session.qrCode.expiresAt
+      };
+    });
+
+    const totalClasses = history.length;
+    const presentCount = history.filter(h => h.status === "present").length;
+    const attendancePercentage = totalClasses > 0 
+      ? Math.round((presentCount / totalClasses) * 100)
+      : 0;
+
+    res.json({
+      success: true,
+      class: {
+        name: classObj.className,
+        section: classObj.section
+      },
+      statistics: {
+        totalClasses,
+        presentCount,
+        absentCount: totalClasses - presentCount,
+        attendancePercentage
+      },
+      history
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// @desc    Get student's attendance history for a specific class
+// @route   GET /api/attendance/history/class/:classId
+// @access  Private (Student only)
+export const getStudentClassAttendance = async (req, res) => {
+  console.log(" i am in getStudentClassAttendance");
+  try {
+    const { classId } = req.params;
+    const studentId = req.user._id;
+    console.log(" and my classId is ", classId);
+
+    const classObj = await Class.findOne({
+      _id: classId,
+      students: studentId
+    });
+    console.log(" and my classis ", classObj);
 
     if (!classObj) {
       return res.status(403).json({ 
@@ -598,7 +667,7 @@ export const getClassAttendanceHistory = async (req, res) => {
     const classObj = await Class.findOne({
       _id: classId,
       teacher: teacherId
-    }).populate('students', 'name email');
+    }).populate('students', 'name email ID');
 
     if (!classObj) {
       return res.status(403).json({ 
@@ -608,7 +677,7 @@ export const getClassAttendanceHistory = async (req, res) => {
 
     const attendanceSessions = await Attendance.find({ class: classId })
       .sort({ date: -1 })
-      .populate('records.student', 'name email');
+      .populate('records.student', 'name email ID');
 
     const history = attendanceSessions.map(session => {
       return {
@@ -652,6 +721,7 @@ export const getClassAttendanceHistory = async (req, res) => {
           _id: student._id,
           name: student.name,
           email: student.email,
+          ID: student.ID,
           attendancePercentage: totalSessions > 0
             ? Math.round((presentCount / totalSessions) * 100)
             : 0
@@ -752,7 +822,7 @@ export const getAttendanceSession = async (req, res) => {
       total: attendance.records.length,
       present: attendance.records.filter(r => r.status === "present").length,
       absent: attendance.records.filter(r => r.status === "absent").length,
-      excused: attendance.records.filter(r => r.status === "excused").length
+
     };
 
     res.json({

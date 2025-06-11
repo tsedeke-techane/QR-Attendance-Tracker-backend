@@ -9,6 +9,7 @@ export async function register(req, res) {
   const { name, ID, email, password, role } = req.body;
 
   try {
+    console.log("Data received", name, ID,email, password, role);
     // Check if user already exists
     const existingUser = await User.findOne ({ email });
     if (existingUser) {
@@ -37,8 +38,9 @@ export async function register(req, res) {
   }
 }
 export async function login(req, res) {
-    const { name, ID , password } = req.body;
+    const {ID , password } = req.body;
     try {
+      console.log("Data received", ID, password);
         // Check if user exists
         const user = await User.findOne({ ID });
         
@@ -55,7 +57,7 @@ export async function login(req, res) {
         // Generate a token
         const token = sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         // Send the token in the response
-        res.status(200).json({ token, user: { id: user._id, name: user.name, ID: user.ID } });
+        res.status(200).json({ token, user: { _id: user._id, name: user.name, ID: user.ID, role: user.role, email: user.email } });
     }
     catch (error) {
         console.error(error);

@@ -77,6 +77,7 @@ export const addStudentToClass = async (req, res) => {
   export const createClass=async (req, res) => {
     try {
       const { className, section, schedule } = req.body
+      console.log("request now again bitch", req.body);
   
       if (!className || !section) {
         return res.status(400).json({
@@ -107,7 +108,7 @@ export const addStudentToClass = async (req, res) => {
     try {
       const classRecord = await Class.findById(req.params.classId).populate({
         path: "students",
-        select: "name email studentId ID",
+        select: "name email studentId ID role",
       })
   
       if (!classRecord) {

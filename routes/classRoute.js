@@ -6,6 +6,7 @@ const router=express.Router();
 router.use(protect);
 router.get("/student-dashboard", async (req, res) => {
     try {
+      console.log("request received", req.user);
       const query = {}
   
       if (req.user.role === "teacher") {
@@ -20,7 +21,7 @@ router.get("/student-dashboard", async (req, res) => {
         })
       }
   
-      const classes = await Class.find(query)
+      const classes = await Class.find(query);
   
       res.status(200).json({
         success: true,

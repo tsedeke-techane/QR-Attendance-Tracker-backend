@@ -22,7 +22,8 @@ import {
   getClassAttendanceHistory,
   updateAttendanceStatus,
   getAttendanceSession,
-  exportAttendanceData
+  exportAttendanceData,
+  getSpecificStudentClassAttendance
 } from '../controllers/attendanceController.js';
 
 
@@ -42,6 +43,7 @@ router.get('/session/:id', authorize("teacher"), getAttendanceSession);
 
 // Data Export
 router.get('/export/:classId', authorize("teacher"), exportAttendanceData);
+router.post('/class/:classId/history', authorize("teacher"), getSpecificStudentClassAttendance);
 
 
 
